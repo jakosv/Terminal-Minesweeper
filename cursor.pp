@@ -14,9 +14,9 @@ procedure CreateCursor(FieldPtr: TFieldPtr; color: word; var CursorPtr: TCursorP
 procedure RemoveCursor(var CursorPtr: TCursorPtr);
 procedure DrawCursor(CursorPtr: TCursorPtr);
 procedure MoveCursor(CursorPtr: TCursorPtr; dx, dy: shortint);
-procedure OpenCursorCell(CursorPtr: TCursorPtr);
-procedure MarkFlagCursor(CursorPtr: TCursorPtr);
-procedure MarkSuspiciousCursor(CursorPtr: TCursorPtr);
+procedure OpenCursorCell(CursorPtr: TCursorPtr; var IsBomb: boolean);
+procedure SetCursorFlag(CursorPtr: TCursorPtr);
+procedure SetCursorSuspicious(CursorPtr: TCursorPtr);
 
 implementation
 
@@ -29,6 +29,7 @@ begin
     CursorPtr^.color := color;
     CursorPtr^.CellBgcolor := 
         GetFieldCellBgcolor(CursorPtr^.x, CursorPtr^.y, FieldPtr);
+    DrawCursor(CursorPtr);
 end;
 
 procedure RemoveCursor(var CursorPtr: TCursorPtr);
@@ -72,22 +73,28 @@ begin
     UpdateCursor(CursorPtr);
 end;
 
-procedure OpenCursorCell(CursorPtr: TCursorPtr);
+procedure OpenCursorCell(CursorPtr: TCursorPtr; var IsBomb: boolean);
 begin
     RestoreCursorCell(CursorPtr);
     OpenFieldCell(CursorPtr^.x, CursorPtr^.y, CursorPtr^.FieldPtr);
+    IsBomb := 
+        IsActiveBomb(CursorPtr^.x, CursorPtr^.y, CursorPtr^.FieldPtr);
+    if IsBomb then
+        ShowFieldBombs(CursorPtr^.FieldPtr);
     UpdateCursor(CursorPtr);
 end;
 
-procedure MarkFlagCursor(CursorPtr: TCursorPtr);
+procedure SetCursorFlag(CursorPtr: TCursorPtr);
 begin
-    MarkFieldCellFlag(CursorPtr^.x, CursorPtr^.y, CursorPtr^.FieldPtr); 
+    RestoreCursorCell(CursorPtr);
+    SetFieldCellFlag(CursorPtr^.x, CursorPtr^.y, CursorPtr^.FieldPtr); 
     UpdateCursor(CursorPtr);
 end;
 
-procedure MarkSuspiciousCursor(CursorPtr: TCursorPtr);
+procedure SetCursorSuspicious(CursorPtr: TCursorPtr);
 begin
-    MarkFieldCellSuspicious(CursorPtr^.x, CursorPtr^.y, CursorPtr^.FieldPtr); 
+    RestoreCursorCell(CursorPtr);
+    SetFieldCellSuspicious(CursorPtr^.x, CursorPtr^.y, CursorPtr^.FieldPtr); 
     UpdateCursor(CursorPtr);
 end;
 

@@ -7,5 +7,6 @@ var
 begin
     clrscr;
     StartGame(GameState);
+    readln;
     clrscr;
 end.

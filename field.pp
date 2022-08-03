@@ -16,14 +16,17 @@ procedure CreateField(height, width, x, y, BombsCount: shortint;
 procedure RemoveField(FieldPtr: TFieldPtr);
 procedure DrawField(FieldPtr: TFieldPtr);
 procedure DrawFieldCell(x, y: CellCoord; FieldPtr: TFieldPtr);
-procedure MarkFieldCellFlag(x, y: CellCoord; FieldPtr: TFieldPtr);
-procedure MarkFieldCellSuspicious(x, y: CellCoord; FieldPtr: TFieldPtr);
+procedure SetFieldCellFlag(x, y: CellCoord; FieldPtr: TFieldPtr);
+procedure SetFieldCellSuspicious(x, y: CellCoord; FieldPtr: TFieldPtr);
+function IsActiveBomb(x, y: CellCoord; FieldPtr: TFieldPtr): boolean;
 procedure OpenFieldCell(x, y: CellCoord; FieldPtr: TFieldPtr);
 procedure SetFieldCellBgcolor(bgcolor: word; x, y: CellCoord; 
     FieldPtr: TFieldPtr);
 function GetFieldCellBgcolor(x, y: CellCoord; FieldPtr: TFieldPtr): word;
+function FieldFlagsCount(FieldPtr: TFieldPtr): integer;
 function IsCorrectCoord(x, y: CellCoord; FieldPtr: TFieldPtr): boolean;
 function ExistActiveBomb(FieldPtr: TFieldPtr): boolean;
+procedure ShowFieldBombs(FieldPtr: TFieldPtr);
 
 implementation
 uses crt;
@@ -146,6 +149,7 @@ begin
     CMInit(FieldPtr^.cells, height, width);
     GenerateBombs(BombsCount, FieldPtr);
     HideFieldCells(FieldPtr);
+    DrawField(FieldPtr);
 end;
 
 procedure RemoveField(FieldPtr: TFieldPtr);
@@ -158,22 +162,34 @@ begin
     dispose(FieldPtr);
     FieldPtr := nil;
 end;
+
+procedure DrawBorderLine(BorderWidth, x, y: shortint);
+var
+    i: shortint;
+begin
+    GotoXY(x, y);
+    for i := 1 to BorderWidth do
+        write(FieldBorderSymbol);
+    GotoXY(1, 1);
+end;
     
 procedure DrawFieldBorder(BorderHeight, BorderWidth, x, y: shortint);
 var
-    i, j: CellCoord;
+    i: CellCoord;
     SaveTextAttr: integer;
 begin
     SaveTextAttr := TextAttr;
-    GotoXY(x, y);
     TextColor(FieldBorderFgcolor);
     TextBackground(FieldBorderBgcolor);
-    for i := 1 to BorderHeight do
+    DrawBorderLine(BorderWidth, x, y);
+    for i := 2 to BorderHeight - 1 do
     begin
         GotoXY(x, y + i - 1);
-        for j := 1 to BorderWidth do
-            write(FieldBorderSymbol);
+        write(FieldBorderSymbol);
+        GotoXY(x + BorderWidth - 1, y + i - 1);
+        write(FieldBorderSymbol);
     end;
+    DrawBorderLine(BorderWidth, x, y + BorderHeight - 1);
     TextAttr := SaveTextAttr;
     GotoXY(1, 1);
 end;
@@ -206,24 +222,29 @@ begin
             DrawFieldCell(j, i, FieldPtr);
 end;
 
-procedure MarkFieldCell(MarkType: MarkTypes; x, y: CellCoord; 
+procedure SetFieldCell(MarkType: MarkTypes; x, y: CellCoord; 
     FieldPtr: TFieldPtr);
 var
     CellObj: TCell;
 begin
     CellObj := CMGet(y, x, FieldPtr^.cells);
-    MarkCell(MarkType, CellObj);
+    if not CellObj.hidden then
+        exit;
+    if CellObj.MarkType <> MarkType then
+        MarkCell(MarkType, CellObj)
+    else
+        MarkCell(MNone, CellObj);
     CMSet(y, x, CellObj, FieldPtr^.cells);
 end;
 
-procedure MarkFieldCellFlag(x, y: CellCoord; FieldPtr: TFieldPtr);
+procedure SetFieldCellFlag(x, y: CellCoord; FieldPtr: TFieldPtr);
 begin
-    MarkFieldCell(MFlag, x, y, FieldPtr);
+    SetFieldCell(MFlag, x, y, FieldPtr);
 end;
 
-procedure MarkFieldCellSuspicious(x, y: CellCoord; FieldPtr: TFieldPtr);
+procedure SetFieldCellSuspicious(x, y: CellCoord; FieldPtr: TFieldPtr);
 begin
-    MarkFieldCell(MSuspicious, x, y, FieldPtr);
+    SetFieldCell(MSuspicious, x, y, FieldPtr);
 end;
 
 procedure SetFieldCellBgcolor(bgcolor: word; x, y: CellCoord; 
@@ -242,6 +263,32 @@ var
 begin
     CellObj := CMGet(y, x, FieldPtr^.cells);
     GetFieldCellBgcolor := CellObj.bgcolor;
+end;
+
+function FieldFlagsCount(FieldPtr: TFieldPtr): integer;
+var
+    i, j: CellCoord;
+    CellObj: TCell;
+    count: integer;
+begin
+    count := 0;
+    for i := 1 to FieldPtr^.height do
+        for j := 1 to FieldPtr^.width do
+        begin
+            CellObj := CMGet(i, j, FieldPtr^.cells);
+            if CellObj.MarkType = MFlag then
+                count := count + 1;
+        end;
+    FieldFlagsCount := count;
+end;
+
+function IsActiveBomb(x, y: CellCoord; FieldPtr: TFieldPtr): boolean;
+var
+    CellObj: TCell;
+begin
+    CellObj := CMGet(y, x, FieldPtr^.cells); 
+    IsActiveBomb := 
+        (CellObj.CellType = CBomb) and (CellObj.MarkType = MNone);
 end;
 
 procedure OpenEmptyFieldCells(x, y: CellCoord; FieldPtr: TFieldPtr);
@@ -294,6 +341,24 @@ begin
                 exist := true;
         end;
     ExistActiveBomb := exist;
+end;
+
+procedure ShowFieldBombs(FieldPtr: TFieldPtr);
+var
+    i, j: CellCoord;
+    CellObj: TCell;
+begin
+    for i := 1 to FieldPtr^.height do
+        for j := 1 to FieldPtr^.width do
+        begin
+            CellObj := CMGet(i, j, FieldPtr^.cells);
+            if CellObj.CellType = CBomb then
+            begin
+                OpenCell(CellObj);
+                CMSet(i, j, CellObj, FieldPtr^.cells);
+                DrawFieldCell(j, i, FieldPtr);
+            end;
+        end;
 end;
 
 end.
