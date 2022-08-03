@@ -1,15 +1,15 @@
 unit game;
 
 interface
-uses cursor, field;
+uses GameCursor, GameField;
 type
     GameDifficult = (GDEasy, GDMedium, GDHard);
     TGame = record
         GameOver, win: boolean;
         difficult: GameDifficult;
         FlagsRemain: integer;
-        FieldPtr: TFieldPtr;
-        CursorPtr: TCursorPtr;
+        field: TFieldPtr;
+        cursor: TCursorPtr;
     end;
 
 procedure StartGame(var GameState: TGame);
@@ -18,12 +18,11 @@ implementation
 uses keyboard, menu, crt;
 
 const
-    CursorColor = White;
     FieldHeight = 10;
     FieldWidth = 20;
-    EasyBombsCount = 10;
+    EasyBombsCount = 20;
     MediumBombsCount = 30;
-    HardBombsCount = 90;
+    HardBombsCount = 40;
 
 function GetBombsCount(difficult: GameDifficult): integer;
 begin
@@ -37,7 +36,7 @@ begin
     end;
 end;
 
-procedure InitGame(difficult: GameDifficult; var GameState: TGame);
+procedure InitGame(var GameState: TGame);
 var
     FieldX, FieldY: shortint;
     BombsCount: integer;
@@ -49,60 +48,93 @@ begin
     BombsCount := GetBombsCount(GameState.difficult);
     GameState.FlagsRemain := BombsCount;
     CreateField(FieldHeight, FieldWidth, FieldX, FieldY, BombsCount, 
-        GameState.FieldPtr);
-    CreateCursor(GameState.FieldPtr, CursorColor, GameState.CursorPtr); 
+        GameState.field);
+    CreateCursor(GameState.field, GameState.cursor); 
 end;
 
 function IsGameOver(var GameState: TGame): boolean;
 begin
-    if (not ExistActiveBomb(GameState.FieldPtr)) and
-        (GameState.FlagsRemain = 0) then
+    if (not ExistActiveBomb(GameState.field)) and
+        (not ExistHiddenEmptyCell(GameState.field)) then
     begin
         GameState.GameOver := true;
         GameState.win := true;
-        ShowFieldBombs(GameState.FieldPtr);
+        ShowFieldBombs(GameState.field);
     end;
     IsGameOver := GameState.GameOver;
 end;
 
-procedure GetGameDifficult(var difficult: GameDifficult);
+procedure GetGameDifficult(var GameState: TGame);
 begin
     { ShowMenu(); }
-    difficult := GDEasy;
-end;
-
-procedure FlagKeyHandler(var GameState: TGame);
-begin
-    SetCursorFlag(GameState.CursorPtr);
-    GameState.FlagsRemain := 
-        GetBombsCount(GameState.difficult) - 
-        FieldFlagsCount(GameState.FieldPtr);
+    GameState.difficult := GDEasy;
 end;
 
 procedure OpenKeyHandler(var GameState: TGame);
 var
-    IsBomb: boolean;
+    cursor: TCursorPtr;
+    field: TFieldPtr;
 begin
-    OpenCursorCell(GameState.CursorPtr, IsBomb);
-    if IsBomb then
+    cursor := GameState.cursor;
+    field := GameState.field;
+    if not IsCellHidden(cursor^.x, cursor^.y, field) then
+        exit;
+    if IsActiveBomb(cursor^.x, cursor^.y, field) then
+    begin
         GameState.GameOver := true;
+        ShowFieldBombs(field);
+    end
+    else
+        OpenFieldCell(cursor^.x, cursor^.y, field);
+    UpdateCursor(cursor, field);
 end;
+
+procedure FlagKeyHandler(var GameState: TGame);
+var
+    cursor: TCursorPtr;
+    field: TFieldPtr;
+begin
+    cursor := GameState.cursor;
+    field := GameState.field;
+    if not IsCellHidden(cursor^.x, cursor^.y, field) then
+        exit;
+    SetFieldCellFlag(cursor^.x, cursor^.y, field);
+    if IsCellFlag(cursor^.x, cursor^.y, field) then
+        GameState.FlagsRemain := GameState.FlagsRemain - 1
+    else
+        GameState.FlagsRemain := GameState.FlagsRemain + 1;
+    UpdateCursor(cursor, field);
+end;
+
+procedure SuspiciousMarkKeyHandler(var GameState: TGame);
+var
+    cursor: TCursorPtr;
+    field: TFieldPtr;
+begin
+    cursor := GameState.cursor;
+    field := GameState.field;
+    if not IsCellHidden(cursor^.x, cursor^.y, field) then
+        exit;
+    SetFieldCellSuspicious(cursor^.x, cursor^.y, field);
+    UpdateCursor(cursor, field);
+end;
+
 
 procedure KeyHandler(key: integer; var GameState: TGame);
 begin
     case key of
         ord('w'), KeyUp:
-            MoveCursor(GameState.CursorPtr, 0, -1);
+            MoveCursor(GameState.cursor, 0, -1, GameState.field);
         ord('s'), KeyDown:
-            MoveCursor(GameState.CursorPtr, 0, 1);
+            MoveCursor(GameState.cursor, 0, 1, GameState.field);
         ord('d'), KeyRight:
-            MoveCursor(GameState.CursorPtr, 1, 0);
+            MoveCursor(GameState.cursor, 1, 0, GameState.field);
         ord('a'), KeyLeft:
-            MoveCursor(GameState.CursorPtr, -1, 0);
+            MoveCursor(GameState.cursor, -1, 0, GameState.field);
         ord('f'):
             FlagKeyHandler(GameState);
         ord('x'):
-            SetCursorSuspicious(GameState.CursorPtr);
+            SuspiciousMarkKeyHandler(GameState);
         KeySpace:
             OpenKeyHandler(GameState);
         KeyEsc:
@@ -133,16 +165,14 @@ end;
 
 procedure GameEnd(var GameState: TGame);
 begin
-    RemoveField(GameState.FieldPtr);
-    RemoveCursor(GameState.CursorPtr);
+    RemoveField(GameState.field);
+    RemoveCursor(GameState.cursor);
 end;
 
 procedure StartGame(var GameState: TGame);
-var
-    difficult: GameDifficult;
 begin
-    GetGameDifficult(difficult);
-    InitGame(difficult, GameState);
+    GetGameDifficult(GameState);
+    InitGame(GameState);
     while not IsGameOver(GameState) do
         GameLoop(GameState);
     GameEnd(GameState);

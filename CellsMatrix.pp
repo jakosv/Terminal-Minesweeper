@@ -1,12 +1,12 @@
 unit CellsMatrix;
 
 interface
-uses cell;
+uses FieldCell;
 type
     CellCoord = integer;
     CMItemPtr = ^CMItem;
     CMItem = record
-        data: TCell;
+        cell: TCell;
         next, prev: CMItemPtr; 
     end;
     TCellsMatrix = record 
@@ -34,7 +34,7 @@ begin
     begin
         new(tmp);
         tmp^.next := matrix.cells;
-        InitDefaultCell(tmp^.data);
+        InitDefaultCell(tmp^.cell);
         matrix.cells := tmp;
     end;
 end;
@@ -54,7 +54,7 @@ begin
     ItemNumber := GetItemNumber(row, column, matrix.columns);
     for i := 2 to ItemNumber do
         tmp := tmp^.next;
-    CMGet := tmp^.data; 
+    CMGet := tmp^.cell; 
 end;
 
 procedure CMSet(row, column: CellCoord; var cell: TCell;  
@@ -67,7 +67,7 @@ begin
     ItemNumber := GetItemNumber(row, column, matrix.columns);
     for i := 2 to ItemNumber do
         tmp := tmp^.next; 
-    tmp^.data := cell;
+    tmp^.cell := cell;
 end;
 
 procedure CMRemove(var matrix: TCellsMatrix);
