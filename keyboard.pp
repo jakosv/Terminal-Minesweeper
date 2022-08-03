@@ -4,6 +4,7 @@ interface
 const
     KeyEsc = 27;
     KeySpace = 32;
+    KeyEnter = 13;
     KeyUp = -72;
     KeyDown = -80;
     KeyLeft = -75;
