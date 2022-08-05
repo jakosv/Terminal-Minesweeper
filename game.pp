@@ -1,13 +1,14 @@
 unit game;
 
 interface
-uses GameCursor, GameField;
+uses GameCursor, GameField, widget, sysutils;
 type
     GameDifficult = (GDEasy, GDMedium, GDHard);
     TGame = record
         GameOver, win: boolean;
         difficult: GameDifficult;
         FlagsRemain: integer;
+        StartTime, GameTime: TDateTime;
         field: TFieldPtr;
         cursor: TCursorPtr;
     end;
@@ -43,6 +44,8 @@ var
 begin
     GameState.GameOver := false;
     GameState.win := false;
+    GameState.StartTime := Time;
+    GameState.GameTime := 0;
     FieldX := (ScreenWidth - FieldWidth) div 2;
     FieldY := (ScreenHeight - FieldHeight) div 2;
     BombsCount := GetBombsCount(GameState.difficult);
@@ -59,7 +62,6 @@ begin
     begin
         GameState.GameOver := true;
         GameState.win := true;
-        ShowFieldBombs(GameState.field);
     end;
     IsGameOver := GameState.GameOver;
 end;
@@ -85,7 +87,7 @@ begin
         ShowFieldBombs(field);
     end
     else
-        OpenFieldCell(cursor^.x, cursor^.y, field);
+        OpenEmptyFieldCell(cursor^.x, cursor^.y, field);
     UpdateCursor(cursor, field);
 end;
 
@@ -147,12 +149,18 @@ begin
     end;
 end;
 
+procedure ShowGameInfo(var GameState: TGame);
+begin
+
+end;
+
 procedure GameLoop(var GameState: TGame);
 const
     DelayDuration = 30;
 var
     key: integer;
 begin
+    GameState.GameTime := Time - GameState.StartTime;
     { ShowGameInfo(GameState); }
     if not KeyPressed then
     begin
@@ -175,6 +183,8 @@ begin
     InitGame(GameState);
     while not IsGameOver(GameState) do
         GameLoop(GameState);
+    if not GameState.win then
+        ShowFieldBombs(GameState.field);
     GameEnd(GameState);
 end;
 

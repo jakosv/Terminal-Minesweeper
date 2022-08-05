@@ -20,7 +20,7 @@ procedure SetCellBgcolor(bgcolor: word; var cell: TCell);
 procedure SetCellEmpty(var cell: TCell);
 procedure SetCellBomb(var cell: TCell);
 procedure HideCell(var cell: TCell);
-procedure OpenCell(var cell: TCell);
+procedure ShowCell(var cell: TCell);
 procedure MarkCell(MarkType: MarkTypes; var cell: TCell);
 
 implementation
@@ -111,7 +111,7 @@ begin
     cell.hidden := true;
 end;
 
-procedure OpenCell(var cell: TCell);
+procedure ShowCell(var cell: TCell);
 begin
     case cell.CellType of
         CEmpty:

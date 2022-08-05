@@ -20,11 +20,10 @@ function IsActiveBomb(x, y: CellCoord; field: TFieldPtr): boolean;
 function IsCellEmpty(x, y: CellCoord; field: TFieldPtr): boolean;
 function IsCellFlag(x, y: CellCoord; field: TFieldPtr): boolean;
 function IsCellHidden(x, y: CellCoord; field: TFieldPtr): boolean;
-procedure OpenFieldCell(x, y: CellCoord; field: TFieldPtr);
+procedure OpenEmptyFieldCell(x, y: CellCoord; field: TFieldPtr);
 procedure SetFieldCellBgcolor(bgcolor: word; x, y: CellCoord; 
     field: TFieldPtr);
 function GetFieldCellBgcolor(x, y: CellCoord; field: TFieldPtr): word;
-function FieldFlagsCount(field: TFieldPtr): integer;
 function IsCorrectCoord(x, y: CellCoord; field: TFieldPtr): boolean;
 function ExistActiveBomb(field: TFieldPtr): boolean;
 function ExistHiddenEmptyCell(field: TFieldPtr): boolean;
@@ -171,17 +170,6 @@ begin
             DrawFieldCell(j, i, field);
 end;
 
-procedure NumberEmptyCell(x, y: CellCoord; BombsAround: shortint; 
-    field: TFieldPtr);
-var
-    cell: TCell;
-begin
-    cell := CMGet(y, x, field^.cells);
-    SetCellSymbol(chr(ord('0') + BombsAround), cell);
-    CMSet(y, x, cell, field^.cells);
-    DrawFieldCell(x, y, field);
-end;
-
 procedure HideFieldCells(field: TFieldPtr);
 var
     cell: TCell;
@@ -268,30 +256,13 @@ begin
     GetFieldCellBgcolor := cell.bgcolor;
 end;
 
-function FieldFlagsCount(field: TFieldPtr): integer;
-var
-    i, j: CellCoord;
-    cell: TCell;
-    count: integer;
-begin
-    count := 0;
-    for i := 1 to field^.height do
-        for j := 1 to field^.width do
-        begin
-            cell := CMGet(i, j, field^.cells);
-            if cell.MarkType = MFlag then
-                count := count + 1;
-        end;
-    FieldFlagsCount := count;
-end;
-
 function IsActiveBomb(x, y: CellCoord; field: TFieldPtr): boolean;
 var
     cell: TCell;
 begin
     cell := CMGet(y, x, field^.cells); 
     IsActiveBomb := 
-        (cell.CellType = CBomb) and (cell.MarkType = MNone);
+        (cell.CellType = CBomb) and (cell.MarkType <> MFlag);
 end;
 
 function IsCellEmpty(x, y: CellCoord; field: TFieldPtr): boolean;
@@ -316,39 +287,40 @@ begin
     IsCellHidden := CMGet(y, x, field^.cells).hidden;
 end;
 
-procedure OpenEmptyFieldCells(x, y: CellCoord; field: TFieldPtr);
+procedure ShowEmptyCell(x, y: CellCoord; BombsAroundCell: shortint; 
+    field: TFieldPtr);
+var
+    cell: TCell;
+begin
+    cell := CMGet(y, x, field^.cells);
+    ShowCell(cell);
+    if BombsAroundCell > 0 then
+        SetCellSymbol(chr(ord('0') + BombsAroundCell), cell);
+    CMSet(y, x, cell, field^.cells);
+    DrawFieldCell(x, y, field);
+end;
+
+{ Recursive procedure }
+procedure OpenEmptyFieldCell(x, y: CellCoord; field: TFieldPtr);
 const
     dx: array [1..3] of shortint = (-1, 0, 1);
     dy: array [1..3] of shortint = (-1, 0, 1);
 var
     i, j, BombsAroundCell: shortint;
-    cell: TCell;
 begin
-    if not IsCorrectCoord(x, y, field) then
-        exit;
-    cell := CMGet(y, x, field^.cells);
-    if (cell.CellType = CBomb) or (not cell.hidden) or 
-        (cell.MarkType <> MNone) then
+    if not IsCorrectCoord(x, y, field) or not IsCellHidden(x, y, field) or
+        not IsCellEmpty(x, y, field) or IsActiveBomb(x, y, field) or
+        IsCellFlag(x, y, field) then
     begin
         exit;
     end;
-    OpenCell(cell);
-    CMSet(y, x, cell, field^.cells);
     BombsAroundCell := CountBombsAround(x, y, field);
-    DrawFieldCell(x, y, field);
+    ShowEmptyCell(x, y, BombsAroundCell, field);
     if BombsAroundCell > 0 then
-    begin
-        NumberEmptyCell(x, y, BombsAroundCell, field);
         exit;
-    end;
     for i := 1 to 3 do
         for j := 1 to 3 do
-            OpenEmptyFieldCells(x + dx[i], y + dy[j], field);  
-end;
-
-procedure OpenFieldCell(x, y: CellCoord; field: TFieldPtr);
-begin
-    OpenEmptyFieldCells(x, y, field);
+            OpenEmptyFieldCell(x + dx[i], y + dy[j], field);
 end;
 
 function ExistActiveBomb(field: TFieldPtr): boolean;
@@ -396,7 +368,7 @@ begin
             cell := CMGet(i, j, field^.cells);
             if cell.CellType = CBomb then
             begin
-                OpenCell(cell);
+                ShowCell(cell);
                 CMSet(i, j, cell, field^.cells);
                 DrawFieldCell(j, i, field);
             end;
