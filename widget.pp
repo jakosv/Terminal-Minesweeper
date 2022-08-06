@@ -4,8 +4,8 @@ interface
 uses crt;
 
 const
-    InterfaceFgcolor = Black;
-    InterfaceBgcolor = LightGray;
+    InterfaceFgcolor = LightGray;
+    InterfaceBgcolor = Black;
 
 type
     ListWidgetItemPtr = ^ListWidgetItem;
@@ -22,15 +22,14 @@ type
 procedure CreateListWidget(var list: ListWidget; title: string);
 procedure RemoveListWidget(var list: ListWidget);
 procedure ShowListWidget(var list: ListWidget; var selection: string);
-procedure DrawText(data: string; x, y: integer; fgcolor, bgcolor: word; 
-    IsBlink: boolean);
-procedure ClearLine(LineNumber: integer);
+procedure DrawText(data: string; x, y: integer; fgcolor, bgcolor: word);
+procedure ClearLine(line: integer);
 procedure AddListWidgetItem(var list: ListWidget; item: string);
 procedure NextListWidgetItem(var list: ListWidget);
 procedure PrevListWidgetItem(var list: ListWidget);
 procedure ShowTextBox(title: string; content: string);
 procedure ShowMessage(msg: string);
-procedure ShowConfirm(msg: string; var answer: boolean; DefaultFirst: boolean);
+procedure ShowConfirm(msg: string; var answer: boolean; DefaultYes: boolean);
 
 implementation
 uses keyboard;
@@ -39,6 +38,9 @@ const
     FormTopIndent = 1;
     FormBottomIndent = 1;
     FormHorizontalIndent = 3;
+    FormHorizontalBorder = '-';
+    FormVerticalBorder = '|';
+    FormBorderCorner = '+';
     ListSelectionFgcolor = InterfaceBgcolor;
     ListSelectionBgcolor = InterfaceFgcolor;
 
@@ -54,24 +56,23 @@ var
 begin
     SaveTextAttr := TextAttr;
     GotoXY(x, y);
+    TextColor(InterfaceFgcolor);
     TextBackground(InterfaceBgcolor);
-    for i:=1 to size do
+    write(FormVerticalBorder);
+    for i:=1 to size - 2 do
         write(' '); 
+    write(FormVerticalBorder);
     GotoXY(1, 1);
     TextAttr := SaveTextAttr;
 end;
 
-procedure DrawText(data: string; x, y: integer; fgcolor, bgcolor: word; 
-    IsBlink: boolean);
+procedure DrawText(data: string; x, y: integer; fgcolor, bgcolor: word);
 var
     i, SaveTextAttr: integer;
 begin
     SaveTextAttr := TextAttr;
     GotoXY(x, y);
-    if IsBlink then
-        TextColor(fgcolor + blink)
-    else
-        TextColor(fgcolor);
+    TextColor(fgcolor);
     TextBackground(bgcolor);
     for i:=1 to length(data) do
         write(data[i]);
@@ -79,11 +80,11 @@ begin
     TextAttr := SaveTextAttr;
 end;
 
-procedure ClearLine(LineNumber: integer);
+procedure ClearLine(line: integer);
 var
     i: integer;
 begin
-    GotoXY(1, LineNumber);
+    GotoXY(1, line);
     for i:=1 to ScreenWidth do
         write(' ');
 end;
@@ -97,11 +98,29 @@ begin
     GotoXY(form.x, form.y);
     TextColor(InterfaceFgcolor);
     TextBackground(InterfaceBgcolor);
-    for i:=form.x to TitleX - 1 do
-        write('=');
+    write(FormBorderCorner);
+    for i:=form.x + 1 to TitleX - 1 do
+        write(FormHorizontalBorder);
     write(form.title);
-    for i:=(TitleX + length(form.title)) to (form.x + form.width - 1) do
-        write('=');
+    for i:=(TitleX + length(form.title)) to (form.x + form.width - 2) do
+        write(FormHorizontalBorder);
+    write(FormBorderCorner);
+    GotoXY(1, 1);
+    TextAttr := SaveTextAttr;
+end;
+
+procedure DrawFormBottom(var form: TForm);
+var
+    i, SaveTextAttr: integer;
+begin
+    SaveTextAttr := TextAttr;
+    GotoXY(form.x, form.y + form.height + 1);
+    TextColor(InterfaceFgcolor);
+    TextBackground(InterfaceBgcolor);
+    write(FormBorderCorner);
+    for i:=1 to form.width - 2 do
+        write(FormHorizontalBorder);
+    write(FormBorderCorner);
     GotoXY(1, 1);
     TextAttr := SaveTextAttr;
 end;
@@ -113,6 +132,7 @@ begin
     DrawFormTitle(form);
     for i:=1 to form.height do
         DrawLine(form.x, form.y + i, form.width);
+    DrawFormBottom(form);
 end;
 
 
@@ -369,7 +389,7 @@ begin
     ShowTextBox('', msg);
 end;
 
-procedure ShowConfirm(msg: string; var answer: boolean; DefaultFirst: boolean);
+procedure ShowConfirm(msg: string; var answer: boolean; DefaultYes: boolean);
 var
     list: ListWidget;
     SelectedItem: string;
@@ -377,7 +397,7 @@ begin
     CreateListWidget(list, msg);
     AddListWidgetItem(list, 'Yes');
     AddListWidgetItem(list, 'No');
-    if not DefaultFirst then
+    if not DefaultYes then
         NextListWidgetItem(list);
     ShowListWidget(list, SelectedItem);
     answer := SelectedItem = 'Yes';

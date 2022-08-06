@@ -1,9 +1,9 @@
 program main;
 
-uses game, widget, GameResults, sysutils, crt;
+uses game, widget, GameResults, sysutils, keyboard, crt;
 
 type
-    MenuButton = (BStart, BResults, BControls, BAuthor, BExit);
+    MenuButton = (BNone, BStart, BResults, BControls, BAuthor, BExit);
     ButtonsArray = array [BStart..BExit] of string;
 
 const
@@ -30,11 +30,6 @@ const
         'This is my terminal minesweeper game\nwritten in Free Pascal.\n' +
         'It is also an Open Source.\n' + 
         'Any bugs? My github: github.com/jakosv';
-    GameDifficults: array [GDEasy..GDHard] of string = (
-        'Easy',
-        'Medium',
-        'Hard'
-    );
 
 procedure ShowMenu(var SelectedButton: MenuButton);
 var
@@ -42,6 +37,7 @@ var
     button: MenuButton;
     list: ListWidget;
 begin
+    clrscr;
     CreateListWidget(list, MenuTitle);
     for button := BStart to BExit do
         AddListWidgetItem(list, MenuItems[button]);
@@ -49,12 +45,31 @@ begin
     RemoveListWidget(list);
     for button := BStart to BExit do
         if SelectedItem = MenuItems[button] then
+        begin
             SelectedButton := button;
+            break;
+        end;
+    clrscr;
 end;
 
 function ResultPosition(difficult: GameDifficult): shortint;
 begin
     ResultPosition := ord(difficult) + 1;
+end;
+
+function ResultToStr(var result: TResult; difficult: GameDifficult): string;
+var
+    str: string;
+begin
+    str := DifficultNames[difficult] + ': ';
+    if result.GameTime <> 0 then
+    begin
+        str := str + TimeToStr(result.GameTime) + ' | Date: ' + 
+            DateTimeToStr(result.date)
+    end
+    else
+        str := str + 'no result';
+    ResultToStr := str;
 end;
 
 procedure ShowBestResults();
@@ -69,14 +84,7 @@ begin
     for difficult := GDEasy to GDHard do
     begin
         result := results[ResultPosition(difficult)];
-        text := text + GameDifficults[difficult] + ': ';
-        if result.GameTime <> 0 then
-        begin
-            text := text + TimeToStr(result.GameTime) + ' | Date: ' + 
-                DateTimeToStr(result.date)
-        end
-        else
-            text := text + 'No results';
+        text := text + ResultToStr(result, difficult);
         if difficult <> GDHard then
             text := text + '\n';
     end;
@@ -93,7 +101,7 @@ begin
     ShowTextBox(AuthorInfoTitle, AuthorInfo);
 end;
 
-procedure CheckGameResults(var GameState: TGame);
+procedure ProceedGameResults(var GameState: TGame);
 var
     GameTime: TDateTime;
     difficult: GameDifficult;
@@ -110,13 +118,18 @@ var
     GameState: TGame;
     SelectedButton: MenuButton;
 begin
+    GameState.IsRestart := false;
+    SelectedButton := BNone;
     while true do
     begin
-        clrscr;
-        ShowMenu(SelectedButton);
+        if not GameState.IsRestart then
+            ShowMenu(SelectedButton);
         case SelectedButton of 
-            BStart:
+            BStart: begin
                 StartGame(GameState);
+                if GameState.GameOver then
+                    ProceedGameResults(GameState);
+            end;
             BResults:
                 ShowBestResults();
             BControls:
@@ -126,7 +139,7 @@ begin
             else
                 break;
         end;
-        CheckGameResults(GameState);
+        SelectedButton := BNone;
     end;
     clrscr;
 end.

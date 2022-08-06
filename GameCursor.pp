@@ -13,6 +13,7 @@ procedure CreateCursor(field: TFieldPtr; var cursor: TCursorPtr);
 procedure RemoveCursor(var cursor: TCursorPtr);
 procedure MoveCursor(cursor: TCursorPtr; dx, dy: shortint;
     field: TFieldPtr);
+procedure DrawCursor(cursor: TCursorPtr; field: TFieldPtr);
 procedure UpdateCursor(cursor: TCursorPtr; field: TFieldPtr);
 
 implementation

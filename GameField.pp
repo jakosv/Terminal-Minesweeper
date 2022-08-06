@@ -1,4 +1,3 @@
-{DEFINE DEBUG}
 unit GameField;
 
 interface
@@ -14,6 +13,7 @@ type
 procedure CreateField(height, width, x, y, BombsCount: shortint; 
     var field: TFieldPtr);
 procedure RemoveField(field: TFieldPtr);
+procedure DrawField(field: TFieldPtr);
 procedure SetFieldCellFlag(x, y: CellCoord; field: TFieldPtr);
 procedure SetFieldCellSuspicious(x, y: CellCoord; field: TFieldPtr);
 function IsActiveBomb(x, y: CellCoord; field: TFieldPtr): boolean;
@@ -179,9 +179,6 @@ begin
         for j := 1 to field^.width do
         begin
             cell := CMGet(i, j, field^.cells);
-            {$IFDEF DEBUG}
-            if cell.CellType <> CBomb then
-            {$ENDIF}
             HideCell(cell);
             CMSet(i, j, cell, field^.cells);
         end;
@@ -211,7 +208,6 @@ begin
     dispose(field);
     field := nil;
 end;
-
 
 procedure SetFieldCell(MarkType: MarkTypes; x, y: CellCoord; 
     field: TFieldPtr);
