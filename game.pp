@@ -139,7 +139,11 @@ begin
         exit;
     SetFieldCellFlag(cursor^.x, cursor^.y, field);
     if IsCellFlag(cursor^.x, cursor^.y, field) then
-        GameState.FlagsRemain := GameState.FlagsRemain - 1
+    begin
+        GameState.FlagsRemain := GameState.FlagsRemain - 1;
+        if GameState.FlagsRemain = 9 then
+            ClearLine(GameState.field^.y - 3);
+    end
     else
         GameState.FlagsRemain := GameState.FlagsRemain + 1;
     UpdateCursor(cursor, field);
@@ -220,7 +224,6 @@ end;
 
 procedure DrawGameInfo(str: string; x, y: shortint);
 begin
-    ClearLine(y);
     DrawText(str, x, y, GameInfoFgcolor, GameInfoBgcolor);
 end;
 
@@ -240,6 +243,7 @@ const
 var
     key: integer;
 begin
+    GameState.GameTime := Time - GameState.StartTime;
     ShowGameInfo(GameState);
     if not KeyPressed then
     begin
