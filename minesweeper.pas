@@ -119,15 +119,17 @@ var
     SelectedButton: MenuButton;
 begin
     GameState.IsRestart := false;
-    SelectedButton := BNone;
     while true do
     begin
         if not GameState.IsRestart then
+        begin
+            SelectedButton := BNone;
             ShowMenu(SelectedButton);
+        end;
         case SelectedButton of 
             BStart: begin
                 StartGame(GameState);
-                if GameState.GameOver then
+                if GameState.win then
                     ProceedGameResults(GameState);
             end;
             BResults:
@@ -139,7 +141,6 @@ begin
             else
                 break;
         end;
-        SelectedButton := BNone;
     end;
     clrscr;
 end.
