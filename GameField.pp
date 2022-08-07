@@ -21,9 +21,10 @@ function IsCellEmpty(x, y: CellCoord; field: TFieldPtr): boolean;
 function IsCellFlag(x, y: CellCoord; field: TFieldPtr): boolean;
 function IsCellHidden(x, y: CellCoord; field: TFieldPtr): boolean;
 procedure OpenEmptyFieldCell(x, y: CellCoord; field: TFieldPtr);
-procedure SetFieldCellBgcolor(bgcolor: word; x, y: CellCoord; 
+procedure SetFieldCellColor(fgcolor, bgcolor: word; x, y: CellCoord; 
     field: TFieldPtr);
-function GetFieldCellBgcolor(x, y: CellCoord; field: TFieldPtr): word;
+procedure GetFieldCellColor(x, y: CellCoord; field: TFieldPtr; 
+    var fgcolor, bgcolor: word);
 function IsCorrectCoord(x, y: CellCoord; field: TFieldPtr): boolean;
 function ExistActiveBomb(field: TFieldPtr): boolean;
 function ExistHiddenEmptyCell(field: TFieldPtr): boolean;
@@ -35,8 +36,8 @@ uses crt;
 const
     FieldBorderSize = 1;
     FieldBorderSymbol = '#';
-    FieldBorderFgcolor = Black;
-    FieldBorderBgcolor = Green;
+    FieldBorderFgcolor = LightGray;
+    FieldBorderBgcolor = Black;
 
 function IsCorrectCoord(x, y: CellCoord; field: TFieldPtr): boolean;
 begin
@@ -147,9 +148,9 @@ var
     cell: TCell;
     SaveTextAttr: integer;
 begin
+    SaveTextAttr := TextAttr;
     cell := CMGet(y, x, field^.cells);
     GotoXY(field^.x + x - 1, field^.y + y - 1);
-    SaveTextAttr := TextAttr;
     TextColor(cell.fgcolor);
     TextBackground(cell.bgcolor);
     write(cell.symbol);
@@ -159,15 +160,15 @@ end;
 
 procedure DrawField(field: TFieldPtr);
 var
-    i, j: CellCoord;
+    x, y: CellCoord;
 begin
     DrawFieldBorder(field^.height + 2 * FieldBorderSize, 
         field^.width + 2 * FieldBorderSize, 
         field^.x - FieldBorderSize, 
         field^.y - FieldBorderSize);
-    for i := 1 to field^.height do
-        for j := 1 to field^.width do
-            DrawFieldCell(j, i, field);
+    for y := 1 to field^.height do
+        for x := 1 to field^.width do
+            DrawFieldCell(x, y, field);
 end;
 
 procedure HideFieldCells(field: TFieldPtr);
@@ -233,23 +234,26 @@ begin
     SetFieldCell(MSuspicious, x, y, field);
 end;
 
-procedure SetFieldCellBgcolor(bgcolor: word; x, y: CellCoord; 
+procedure SetFieldCellColor(fgcolor, bgcolor: word; x, y: CellCoord; 
     field: TFieldPtr);
 var
     cell: TCell;
 begin
     cell := CMGet(y, x, field^.cells);
+    SetCellFgcolor(fgcolor, cell);
     SetCellBgcolor(bgcolor, cell);
     CMSet(y, x, cell, field^.cells);
     DrawFieldCell(x, y, field);
 end;
 
-function GetFieldCellBgcolor(x, y: CellCoord; field: TFieldPtr): word;
+procedure GetFieldCellColor(x, y: CellCoord; field: TFieldPtr; 
+    var fgcolor, bgcolor: word);
 var
     cell: TCell;
 begin
     cell := CMGet(y, x, field^.cells);
-    GetFieldCellBgcolor := cell.bgcolor;
+    fgcolor := cell.fgcolor;
+    bgcolor := cell.bgcolor;
 end;
 
 function IsActiveBomb(x, y: CellCoord; field: TFieldPtr): boolean;

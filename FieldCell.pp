@@ -13,7 +13,7 @@ type
         hidden: boolean;
     end;
 
-procedure InitDefaultCell(var cell: TCell);
+procedure CreateCell(var cell: TCell);
 procedure SetCellSymbol(symbol: char; var cell: TCell);
 procedure SetCellFgcolor(fgcolor: word; var cell: TCell);
 procedure SetCellBgcolor(bgcolor: word; var cell: TCell);
@@ -26,7 +26,7 @@ procedure MarkCell(MarkType: MarkTypes; var cell: TCell);
 implementation
 const
     HiddenCellSymbol = '.';
-    HiddenCellFgcolor = White;
+    HiddenCellFgcolor = Black;
     HiddenCellBgcolor = Green;
     EmptyCellSymbol = ' ';
     EmptyCellFgcolor = Black;
@@ -34,12 +34,24 @@ const
     BombCellSymbol = '*';
     BombCellFgcolor = Red;
     BombCellBgcolor = Brown;
-    MarkedBombCellFgcolor = White;
+    MarkedBombCellFgcolor = Green;
     MarkedBombCellBgcolor = Brown;
     FlagCellSymbol = 'F';
     FlagCellFgcolor = Red;
+    FlagCellBgcolor = HiddenCellBgcolor;
     SuspiciousCellSymbol = '?';
     SuspiciousCellFgcolor = Black; 
+    SuspiciousCellBgcolor = HiddenCellBgcolor; 
+
+procedure CreateCell(var cell: TCell);
+begin
+    cell.symbol := HiddenCellSymbol;
+    cell.fgcolor := HiddenCellFgcolor;
+    cell.bgcolor := HiddenCellBgcolor;
+    cell.CellType := CEmpty;
+    cell.MarkType := MNone;
+    cell.hidden := false;
+end;
 
 procedure SetCellEmpty(var cell: TCell);
 begin
@@ -65,13 +77,6 @@ begin
     cell.CellType := CBomb;
 end;
 
-procedure InitDefaultCell(var cell: TCell);
-begin
-    cell.MarkType := MNone;
-    cell.hidden := false;
-    SetCellEmpty(cell);
-end;
-
 procedure SetCellSymbol(symbol: char; var cell: TCell);
 begin
     cell.symbol := symbol;
@@ -92,7 +97,7 @@ begin
     cell.MarkType := MFlag;
     SetCellSymbol(FlagCellSymbol, cell);
     SetCellFgcolor(FlagCellFgcolor, cell);
-    SetCellBgcolor(HiddenCellBgcolor, cell);
+    SetCellBgcolor(FlagCellBgcolor, cell);
 end;
 
 procedure MarkCellSuspicious(var cell: TCell);
@@ -100,7 +105,7 @@ begin
     cell.MarkType := MSuspicious;
     SetCellSymbol(SuspiciousCellSymbol, cell);
     SetCellFgcolor(SuspiciousCellFgcolor, cell);
-    SetCellBgcolor(HiddenCellBgcolor, cell);
+    SetCellBgcolor(FlagCellBgcolor, cell);
 end;
 
 procedure HideCell(var cell: TCell);

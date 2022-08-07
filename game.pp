@@ -1,7 +1,7 @@
 unit game;
 
 interface
-uses GameCursor, GameField, widget, sysutils;
+uses GameCursor, GameField, PauseMenu, widget, sysutils;
 type
     GameDifficult = (GDEasy, GDMedium, GDHard);
     TGame = record
@@ -25,8 +25,6 @@ procedure StartGame(var GameState: TGame);
 implementation
 uses keyboard, crt;
 
-type
-    PauseMenuButtons = (BNone, BContinue, BRestart, BExit);
 const
     FieldHeight = 10;
     FieldWidth = 20;
@@ -34,14 +32,14 @@ const
     MediumBombsCount = 30;
     HardBombsCount = 40;
     DifficultMenuTitle = 'Choose difficult';
-    PauseMenuTitle = 'Pause';
-    PauseMenuItems: array [BContinue..BExit] of string = (
-        'Continue',
-        'Restart game',
-        'Exit'
-    );
     GameInfoFgcolor = LightGray;
     GameInfoBgcolor = Black;
+    WinMessage = 'You win! Press any key to continue...';
+    LoseMessage = 'You lose! Press any key to continue...';
+    PlayAgainMessage = 'Play again?';
+    GameOverMessageLine = 5;
+    FlagsInfoLine = 3;
+    TimerLine = 4;
 
 function GetBombsCount(difficult: GameDifficult): integer;
 begin
@@ -142,7 +140,7 @@ begin
     begin
         GameState.FlagsRemain := GameState.FlagsRemain - 1;
         if GameState.FlagsRemain = 9 then
-            ClearLine(GameState.field^.y - 3);
+            ClearLine(FlagsInfoLine);
     end
     else
         GameState.FlagsRemain := GameState.FlagsRemain + 1;
@@ -162,32 +160,14 @@ begin
     UpdateCursor(cursor, field);
 end;
 
-procedure ShowPauseMenu(var SelectedButton: PauseMenuButtons);
-var
-    SelectedItem: string;
-    button: PauseMenuButtons;
-    list: ListWidget;
-begin
-    SelectedButton := BNone;
-    CreateListWidget(list, PauseMenuTitle);
-    for button := BContinue to BExit do
-        AddListWidgetItem(list, PauseMenuItems[button]);
-    ShowListWidget(list, SelectedItem);
-    RemoveListWidget(list);
-    for button := BContinue to BExit do
-        if SelectedItem = PauseMenuItems[button] then
-        begin
-            SelectedButton := button;
-            break;
-        end;
-    clrscr;
-end;
-
 procedure PauseKeyHandler(var GameState: TGame);
 var
     SelectedButton: PauseMenuButtons;
+    PauseTimestamp: TDateTime;
 begin
+    PauseTimestamp := Time;
     ShowPauseMenu(SelectedButton);
+    GameState.StartTime := GameState.StartTime + (Time - PauseTimestamp); 
     case SelectedButton of
         BRestart:
             GameState.IsRestart := true;
@@ -233,8 +213,8 @@ var
 begin
     TimerMsg := 'Time: ' + TimeToStr(GameState.GameTime);
     FlagsMsg := 'Flags remain: ' + IntToStr(GameState.FlagsRemain);
-    DrawGameInfo(TimerMsg, GameState.field^.x, GameState.field^.y - 4);
-    DrawGameInfo(FlagsMsg, GameState.field^.x, GameState.field^.y - 3);
+    DrawGameInfo(TimerMsg, GameState.field^.x, TimerLine);
+    DrawGameInfo(FlagsMsg, GameState.field^.x, FlagsInfoLine);
 end;
 
 procedure GameLoop(var GameState: TGame);
@@ -254,6 +234,11 @@ begin
     KeyHandler(key, GameState);
 end;
 
+procedure ShowPlayAgainDialog(var answer: boolean);
+begin
+    ShowConfirm(PlayAgainMessage, answer, false);
+end;
+
 procedure GameEnd(var GameState: TGame);
 var
     key: integer;
@@ -262,7 +247,12 @@ begin
     begin
         ShowFieldBombs(GameState.field);
         UpdateCursor(GameState.cursor, GameState.field);
+        if GameState.win then
+            DrawGameInfo(WinMessage, GameState.field^.x, GameOverMessageLine)
+        else
+            DrawGameInfo(LoseMessage, GameState.field^.x, GameOverMessageLine);
         GetKey(key);
+        ShowPlayAgainDialog(GameState.IsRestart);
     end;
     RemoveField(GameState.field);
     RemoveCursor(GameState.cursor);

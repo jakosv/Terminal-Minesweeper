@@ -34,7 +34,7 @@ begin
     begin
         new(tmp);
         tmp^.next := matrix.cells;
-        InitDefaultCell(tmp^.cell);
+        CreateCell(tmp^.cell);
         matrix.cells := tmp;
     end;
 end;

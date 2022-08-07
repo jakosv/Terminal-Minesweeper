@@ -5,7 +5,7 @@ uses GameField;
 type
     TCursor = record
         x, y: shortint;
-        color, SaveCellBgcolor: word;
+        fgcolor, bgcolor, SaveCellBgcolor: word;
     end;
     TCursorPtr = ^TCursor;
 
@@ -20,12 +20,12 @@ implementation
 uses crt;
 
 const
-    CursorDefaultColor = White;
+    DefaultCursorBgcolor = LightGray;
 
 procedure DrawCursor(cursor: TCursorPtr; field: TFieldPtr);
 begin
-    SetFieldCellBgcolor(cursor^.color, cursor^.x, cursor^.y, 
-        field); 
+    SetFieldCellColor(cursor^.fgcolor, cursor^.bgcolor, cursor^.x, 
+        cursor^.y, field);
 end;
 
 procedure CreateCursor(field: TFieldPtr; var cursor: TCursorPtr);
@@ -33,15 +33,15 @@ begin
     new(cursor);
     cursor^.x := 1;
     cursor^.y := 1;
-    cursor^.color := CursorDefaultColor;
-    cursor^.SaveCellBgcolor := 
-        GetFieldCellBgcolor(cursor^.x, cursor^.y, field);
+    GetFieldCellColor(cursor^.x, cursor^.y, field, cursor^.fgcolor,
+        cursor^.SaveCellBgcolor);
+    cursor^.bgcolor := DefaultCursorBgcolor;
     DrawCursor(cursor, field);
 end;
 
 procedure RestoreCursorCell(cursor: TCursorPtr; field: TFieldPtr);
 begin
-    SetFieldCellBgcolor(cursor^.SaveCellBgcolor, cursor^.x, 
+    SetFieldCellColor(cursor^.fgcolor, cursor^.SaveCellBgcolor, cursor^.x, 
         cursor^.y, field);     
 end;
 
@@ -53,8 +53,8 @@ end;
 
 procedure UpdateCursor(cursor: TCursorPtr; field: TFieldPtr);
 begin
-    cursor^.SaveCellBgcolor := 
-        GetFieldCellBgcolor(cursor^.x, cursor^.y, field);
+    GetFieldCellColor(cursor^.x, cursor^.y, field, cursor^.fgcolor,
+        cursor^.SaveCellBgcolor);
     DrawCursor(cursor, field);
 end;
 
