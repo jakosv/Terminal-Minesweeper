@@ -26,7 +26,7 @@ procedure MarkCell(MarkType: MarkTypes; var cell: TCell);
 implementation
 const
     HiddenCellSymbol = '.';
-    HiddenCellFgcolor = Black;
+    HiddenCellFgcolor = LightGray;
     HiddenCellBgcolor = Green;
     EmptyCellSymbol = ' ';
     EmptyCellFgcolor = Black;

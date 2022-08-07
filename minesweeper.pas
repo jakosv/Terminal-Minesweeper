@@ -1,7 +1,9 @@
 program main;
 
-uses game, MainMenu, GameResults, keyboard, crt;
+uses game, MainMenu, GameResults, widget, keyboard, crt, sysutils;
 
+const
+    NewRecordTitle = 'New record!';
 procedure ProceedGameResults(var GameState: TGame);
 var
     GameTime: TDateTime;
@@ -12,7 +14,11 @@ begin
     difficult := GameState.difficult;
     ResultPosition := ord(difficult) + 1;
     if IsNewRecord(GameTime, ResultPosition) then
+    begin
+        clrscr;
+        ShowTextBox(NewRecordTitle, TimeToStr(GameState.GameTime));
         SaveResult(GameTime, ResultPosition);
+    end;
 end;
 
 var

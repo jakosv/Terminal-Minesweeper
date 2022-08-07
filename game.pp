@@ -29,13 +29,14 @@ const
     FieldHeight = 10;
     FieldWidth = 20;
     EasyBombsCount = 20;
-    MediumBombsCount = 30;
-    HardBombsCount = 40;
+    MediumBombsCount = 25;
+    HardBombsCount = 30;
     DifficultMenuTitle = 'Choose difficult';
     GameInfoFgcolor = LightGray;
     GameInfoBgcolor = Black;
-    WinMessage = 'You win! Press any key to continue...';
-    LoseMessage = 'You lose! Press any key to continue...';
+    GameOverMessageColor = Red;
+    WinMessage = 'You win! Press any key';
+    LoseMessage = 'You lose! Press any key';
     PlayAgainMessage = 'Play again?';
     GameOverMessageLine = 5;
     FlagsInfoLine = 3;
@@ -126,10 +127,24 @@ begin
     UpdateCursor(cursor, field);
 end;
 
+function CountDigits(number: integer): integer;
+var
+    count: integer;
+begin
+    count := 0;
+    while number <> 0 do
+    begin
+        count := count + 1;
+        number := number div 10;
+    end;
+    CountDigits := count;
+end;
+
 procedure FlagKeyHandler(var GameState: TGame);
 var
     cursor: TCursorPtr;
     field: TFieldPtr;
+    FlagsRemain: integer;
 begin
     cursor := GameState.cursor;
     field := GameState.field;
@@ -137,13 +152,12 @@ begin
         exit;
     SetFieldCellFlag(cursor^.x, cursor^.y, field);
     if IsCellFlag(cursor^.x, cursor^.y, field) then
-    begin
-        GameState.FlagsRemain := GameState.FlagsRemain - 1;
-        if GameState.FlagsRemain = 9 then
-            ClearLine(FlagsInfoLine);
-    end
+        FlagsRemain := GameState.FlagsRemain - 1
     else
-        GameState.FlagsRemain := GameState.FlagsRemain + 1;
+        FlagsRemain := GameState.FlagsRemain + 1;
+    if CountDigits(FlagsRemain) <> CountDigits(GameState.FlagsRemain) then
+        ClearLine(FlagsInfoLine);
+    GameState.FlagsRemain := FlagsRemain;
     UpdateCursor(cursor, field);
 end;
 
@@ -202,19 +216,16 @@ begin
     end;
 end;
 
-procedure DrawGameInfo(str: string; x, y: shortint);
-begin
-    DrawText(str, x, y, GameInfoFgcolor, GameInfoBgcolor);
-end;
-
 procedure ShowGameInfo(var GameState: TGame);
 var
     TimerMsg, FlagsMsg: string;
 begin
     TimerMsg := 'Time: ' + TimeToStr(GameState.GameTime);
     FlagsMsg := 'Flags remain: ' + IntToStr(GameState.FlagsRemain);
-    DrawGameInfo(TimerMsg, GameState.field^.x, TimerLine);
-    DrawGameInfo(FlagsMsg, GameState.field^.x, FlagsInfoLine);
+    DrawText(TimerMsg, GameState.field^.x, TimerLine, GameInfoFgcolor, 
+        GameInfoBgcolor);
+    DrawText(FlagsMsg, GameState.field^.x, FlagsInfoLine, GameInfoFgcolor, 
+        GameInfoBgcolor);
 end;
 
 procedure GameLoop(var GameState: TGame);
@@ -236,7 +247,7 @@ end;
 
 procedure ShowPlayAgainDialog(var answer: boolean);
 begin
-    ShowConfirm(PlayAgainMessage, answer, false);
+    ShowConfirm(PlayAgainMessage, answer, true);
 end;
 
 procedure GameEnd(var GameState: TGame);
@@ -248,9 +259,11 @@ begin
         ShowFieldBombs(GameState.field);
         UpdateCursor(GameState.cursor, GameState.field);
         if GameState.win then
-            DrawGameInfo(WinMessage, GameState.field^.x, GameOverMessageLine)
+            DrawText(WinMessage, GameState.field^.x, GameOverMessageLine,
+                GameOverMessageColor, GameInfoBgcolor)
         else
-            DrawGameInfo(LoseMessage, GameState.field^.x, GameOverMessageLine);
+            DrawText(LoseMessage, GameState.field^.x, GameOverMessageLine, 
+                GameOverMessageColor, GameInfoBgcolor);
         GetKey(key);
         ShowPlayAgainDialog(GameState.IsRestart);
     end;
