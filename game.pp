@@ -115,8 +115,11 @@ var
 begin
     cursor := GameState.cursor;
     field := GameState.field;
-    if not IsCellHidden(cursor^.x, cursor^.y, field) then
+    if not IsCellHidden(cursor^.x, cursor^.y, field) or
+        IsCellFlag(cursor^.x, cursor^.y, field) then
+    begin
         exit;
+    end;
     if IsActiveBomb(cursor^.x, cursor^.y, field) then
     begin
         GameState.GameOver := true;

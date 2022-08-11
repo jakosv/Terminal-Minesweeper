@@ -9,6 +9,7 @@ var
     GameTime: TDateTime;
     difficult: GameDifficult;
     ResultPosition: integer;
+    message: string;
 begin
     GameTime := GameState.GameTime;
     difficult := GameState.difficult;
@@ -16,7 +17,9 @@ begin
     if IsNewRecord(GameTime, ResultPosition) then
     begin
         clrscr;
-        ShowTextBox(NewRecordTitle, TimeToStr(GameState.GameTime));
+        message := 
+            DifficultNames[difficult] + ': ' + TimeToStr(GameState.GameTime);
+        ShowTextBox(NewRecordTitle, message);
         SaveResult(GameTime, ResultPosition);
     end;
 end;

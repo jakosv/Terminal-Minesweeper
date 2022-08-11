@@ -37,7 +37,7 @@ const
     FieldBorderSize = 1;
     FieldBorderSymbol = '#';
     FieldBorderFgcolor = LightGray;
-    FieldBorderBgcolor = Black;
+    FieldBorderBgcolor = Green;
 
 function IsCorrectCoord(x, y: CellCoord; field: TFieldPtr): boolean;
 begin

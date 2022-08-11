@@ -35,7 +35,7 @@ const
     AuthorInfo = 'Hello, world! I am Jakos! :D\n' +
         'This is my terminal minesweeper game\nwritten in Free Pascal.\n' +
         'It is also an Open Source.\n' + 
-        'Any bugs? My github: github.com/jakosv';
+        'My github: https://github.com/jakosv';
 
 procedure ShowMenu(var SelectedButton: MenuButton);
 var
