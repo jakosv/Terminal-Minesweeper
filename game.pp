@@ -1,7 +1,7 @@
 unit game;
 
 interface
-uses GameCursor, GameField, PauseMenu, widget, sysutils;
+uses GameCursor, GameField, PauseMenu, widget, controls, sysutils;
 type
     GameDifficult = (GDEasy, GDMedium, GDHard);
     TGame = record
@@ -11,6 +11,7 @@ type
         StartTime, GameTime: TDateTime;
         field: TFieldPtr;
         cursor: TCursorPtr;
+        controls: ControlsArray;
     end;
 
 const
@@ -72,6 +73,7 @@ begin
     CreateField(FieldHeight, FieldWidth, FieldX, FieldY, BombsCount, 
         GameState.field);
     CreateCursor(GameState.field, GameState.cursor); 
+    LoadControls(GameState.controls);
 end;
 
 function IsGameOver(var GameState: TGame): boolean;
@@ -198,25 +200,26 @@ begin
 end;
 
 procedure KeyHandler(key: integer; var GameState: TGame);
+var
+    CurrentControls: ControlsArray; 
 begin
-    case key of
-        ord('w'), KeyUp:
-            MoveCursor(GameState.cursor, 0, -1, GameState.field);
-        ord('s'), KeyDown:
-            MoveCursor(GameState.cursor, 0, 1, GameState.field);
-        ord('d'), KeyRight:
-            MoveCursor(GameState.cursor, 1, 0, GameState.field);
-        ord('a'), KeyLeft:
-            MoveCursor(GameState.cursor, -1, 0, GameState.field);
-        ord('f'):
-            FlagKeyHandler(GameState);
-        ord('x'):
-            SuspiciousMarkKeyHandler(GameState);
-        KeySpace:
-            OpenKeyHandler(GameState);
-        KeyEsc:
-            PauseKeyHandler(GameState);
-    end;
+    CurrentControls := GameState.controls;
+    if key = CurrentControls[CKeyMoveUp] then
+        MoveCursor(GameState.cursor, 0, -1, GameState.field)
+    else if key = CurrentControls[CKeyMoveDown] then
+        MoveCursor(GameState.cursor, 0, 1, GameState.field)
+    else if key = CurrentControls[CKeyMoveRight] then
+        MoveCursor(GameState.cursor, 1, 0, GameState.field)
+    else if key = CurrentControls[CKeyMoveLeft] then
+        MoveCursor(GameState.cursor, -1, 0, GameState.field)
+    else if key = CurrentControls[CKeyFlag] then
+        FlagKeyHandler(GameState)
+    else if key = CurrentControls[CKeySuspicious] then
+        SuspiciousMarkKeyHandler(GameState)
+    else if key = CurrentControls[CKeyOpen] then
+        OpenKeyHandler(GameState)
+    else if key = CurrentControls[CKeyPause] then
+        PauseKeyHandler(GameState);
 end;
 
 procedure ShowGameInfo(var GameState: TGame);
