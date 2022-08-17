@@ -249,19 +249,19 @@ begin
     begin
         DrawListWidget(list);
         GetKey(key);
-        case key of
-            KeyDown, ord('s'):
-                NextListWidgetItem(list);
-            KeyUp, ord('w'):
-                PrevListWidgetItem(list);
-            KeyEnter: begin
-                selection := list.SelectedItem^.data;
-                break;
-            end;
-            ord('q'), KeyEsc: begin
-                selection := '';
-                break;
-            end;
+        if key = SpecKeyCodes[KeyDown] then
+            NextListWidgetItem(list)
+        else if key = SpecKeyCodes[KeyUp] then
+                PrevListWidgetItem(list)
+        else if key = SpecKeyCodes[KeyEnter] then
+        begin
+            selection := list.SelectedItem^.data;
+            break;
+        end
+        else if key = SpecKeyCodes[KeyEsc] then
+        begin
+            selection := '';
+            break;
         end;
     end;
 end;

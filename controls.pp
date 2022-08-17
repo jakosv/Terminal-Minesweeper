@@ -3,9 +3,21 @@ unit controls;
 interface
 uses keyboard;
 type
-    ControlKey = (CKeyMoveUp, CKeyMoveDown, CKeyMoveRight, CKeyMoveLeft, 
+    ControlKeys = (CKeyMoveUp, CKeyMoveDown, CKeyMoveRight, CKeyMoveLeft, 
         CKeyOpen, CKeyFlag, CKeySuspicious, CKeyPause); 
     ControlsArray = array [CKeyMoveUp..CKeyPause] of shortint;
+    
+const
+    ControlKeyName: array [CKeyMoveUp..CKeyPause] of string = (
+        'Move up',
+        'Move down',
+        'Move right',
+        'Move left',
+        'Open cell',
+        'Set flag',
+        'Mark suspicicous',
+        'Pause'
+    );
 
 procedure LoadControls(var CurrentControls: ControlsArray);
 procedure SetControls(var NewControls: ControlsArray);
@@ -14,28 +26,20 @@ procedure GetDefaultControls(var DefaultControls: ControlsArray);
 implementation
 const
     ControlsFilename = '.controls';
-    DefaultKeyMoveUp = KeyUp;
-    DefaultKeyMoveDown = KeyDown;
-    DefaultKeyMoveRight = KeyRight;
-    DefaultKeyMoveLeft = KeyLeft;
-    DefaultKeyOpen = KeySpace;
-    DefaultKeyFlag = ord('f');
-    DefaultKeySuspicious = ord('x');
-    DefaultKeyPause = KeyEsc;
 
 type
     FileOfControls = file of ControlsArray;
 
 procedure GetDefaultControls(var DefaultControls: ControlsArray);
 begin
-    DefaultControls[CKeyMoveUp] := DefaultKeyMoveUp;
-    DefaultControls[CKeyMoveDown] := DefaultKeyMoveDown;
-    DefaultControls[CKeyMoveRight] := DefaultKeyMoveRight;
-    DefaultControls[CKeyMoveLeft] := DefaultKeyMoveLeft;
-    DefaultControls[CKeyOpen] := DefaultKeyOpen;
-    DefaultControls[CKeyFlag] := DefaultKeyFlag;
-    DefaultControls[CKeySuspicious] := DefaultKeySuspicious;
-    DefaultControls[CKeyPause] := DefaultKeyPause;
+    DefaultControls[CKeyMoveUp] := SpecKeyCodes[KeyUp];
+    DefaultControls[CKeyMoveDown] := SpecKeyCodes[KeyDown];
+    DefaultControls[CKeyMoveRight] := SpecKeyCodes[KeyRight];
+    DefaultControls[CKeyMoveLeft] := SpecKeyCodes[KeyLeft];
+    DefaultControls[CKeyOpen] := SpecKeyCodes[KeySpace];
+    DefaultControls[CKeyFlag] := ord('f');
+    DefaultControls[CKeySuspicious] := ord('x');
+    DefaultControls[CKeyPause] := SpecKeyCodes[KeyEsc];
 end;
 
 procedure InitDefaultControls(var f: FileOfControls);

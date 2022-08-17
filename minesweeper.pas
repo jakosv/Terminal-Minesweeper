@@ -45,7 +45,7 @@ begin
             BResults:
                 ShowBestResults();
             BControls:
-                ShowControlsInfo();
+                ShowControlsSettings();
             BAuthor:
                 ShowAuthorInfo();
             else

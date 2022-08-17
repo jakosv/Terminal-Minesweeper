@@ -7,14 +7,16 @@ type
 procedure ShowMenu(var SelectedButton: MenuButton);
 procedure ShowBestResults;
 procedure ShowControlsInfo;
+procedure ShowControlsSettings;
 procedure ShowAuthorInfo;
 
 implementation
-uses game, widget, GameResults, sysutils, crt;
+uses game, widget, GameResults, keyboard, controls, sysutils, crt;
 
 const
     MenuTitle = 'Menu';
     ControlsInfoTitle = 'Controls';
+    ControlsSettingsTitle = 'Controls';
     AuthorInfoTitle = 'Author';
     ResultsTitle = 'Results';
     MenuItems: array [BStart..BExit] of string = (
@@ -58,7 +60,8 @@ begin
     clrscr;
 end;
 
-function ResultToStr(var result: TResult; difficult: GameDifficult): string;
+function ResultToStr(var result: TResult; difficult: GameDifficult)
+                                                                : string;
 var
     str: string;
 begin
@@ -97,6 +100,34 @@ end;
 procedure ShowControlsInfo;
 begin
     ShowTextBox(ControlsInfoTitle, ControlsInfo);
+end;
+
+procedure ShowControlsSettings;
+var
+    SelectedItem, ControlName, KeyName: string;
+    key: ControlKeys;
+    SpecKey: SpecKeys;
+    list: ListWidget;
+    CurrentControls: ControlsArray;
+begin
+    LoadControls(CurrentControls);
+    CreateListWidget(list, ControlsSettingsTitle);   
+    for key := CKeyMoveUp to CKeyPause do
+    begin
+        KeyName := '';
+        for SpecKey := KeyEsc to KeyRight do
+            if SpecKeyCodes[SpecKey] = CurrentControls[key] then
+            begin
+                KeyName := SpecKeyName[SpecKey];
+                break;
+            end;
+        if KeyName = '' then
+            KeyName := chr(CurrentControls[key]);
+        ControlName := ControlKeyName[key] + ' - ' + KeyName; 
+        AddListWidgetItem(list, ControlName);
+    end;
+    ShowListWidget(list, SelectedItem);
+    RemoveListWidget(list);
 end;
 
 procedure ShowAuthorInfo;
