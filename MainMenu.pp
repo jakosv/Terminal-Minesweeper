@@ -6,7 +6,6 @@ type
 
 procedure ShowMenu(var SelectedButton: MenuButton);
 procedure ShowBestResults;
-procedure ShowControlsInfo;
 procedure ShowControlsSettings;
 procedure ShowAuthorInfo;
 
@@ -15,10 +14,12 @@ uses game, widget, GameResults, keyboard, controls, sysutils, crt;
 
 const
     MenuTitle = 'Menu';
-    ControlsInfoTitle = 'Controls';
-    ControlsSettingsTitle = 'Controls';
+    ControlsoTitle = 'Controls';
+    ControlsSettingsTitle = 'Controls settings';
     AuthorInfoTitle = 'Author';
     ResultsTitle = 'Results';
+    SaveControlsButton = 'Save';
+    CancelControlsButton = 'Cancel';
     MenuItems: array [BStart..BExit] of string = (
         'Start game', 
         'Best results', 
@@ -26,14 +27,6 @@ const
         'Author', 
         'Exit'
     ); 
-    ControlsInfo = 'w/ArrowUp - move up\n' +
-        'a/ArrowLeft - move left\n' +
-        's/ArrowDown - move down\n' +
-        'd/ArrowRight - move right\n' +
-        'Space - open cell\n' +
-        'f - set flag\n' +
-        'x - mark cell suspicious\n' +
-        'Esc - pause';
     AuthorInfo = 'Hello, world! I am Jakos! :D\n' +
         'This is my terminal minesweeper game\nwritten in Free Pascal.\n' +
         'It is also an Open Source.\n' + 
@@ -45,7 +38,6 @@ var
     button: MenuButton;
     list: ListWidget;
 begin
-    clrscr;
     CreateListWidget(list, MenuTitle);
     for button := BStart to BExit do
         AddListWidgetItem(list, MenuItems[button]);
@@ -83,6 +75,7 @@ var
     ResultPosition: integer;
     difficult: GameDifficult;
     text: string;
+    key: shortint;
 begin
     text := '';
     GetResults(results);
@@ -95,44 +88,88 @@ begin
             text := text + '\n';
     end;
     ShowTextBox(ResultsTitle, text);
+    GetKey(key);
 end;
 
-procedure ShowControlsInfo;
+procedure ParseControlStr(var str: string; var ControlName: string);
+var
+    i: shortint;
 begin
-    ShowTextBox(ControlsInfoTitle, ControlsInfo);
+    ControlName := '';
+    for i := 1 to length(str) - 1 do
+        if (str[i] = ' ') and (str[i + 1] = '-') then
+            break
+        else
+            ControlName := ControlName + str[i]
+end;
+
+procedure GetNewControl(CurrentControl: TControl; 
+    var ControlKeyCode: shortint);
+var
+    SaveKey, key: shortint;
+    message, KeyName: string;
+begin
+    key := ControlKeyCode;
+    SaveKey := key;
+    while true do
+    begin
+        GetKeyName(key, KeyName);
+        message := 'Key: ' + KeyName + '\nPress key again to apply';
+        clrscr;
+        ShowTextBox(ControlsNames[CurrentControl], message);
+        GetKey(key);
+        if key = SaveKey then
+            break;
+        SaveKey := key;
+    end;
+    ControlKeyCode := SaveKey;
 end;
 
 procedure ShowControlsSettings;
 var
-    SelectedItem, ControlName, KeyName: string;
-    key: ControlKeys;
-    SpecKey: SpecKeys;
+    SelectedItem, ControlDescription, KeyName, SelectedControlName: string;
+    control: TControl;
     list: ListWidget;
     CurrentControls: ControlsArray;
 begin
     LoadControls(CurrentControls);
     CreateListWidget(list, ControlsSettingsTitle);   
-    for key := CKeyMoveUp to CKeyPause do
+    for control := CKeyMoveUp to CKeyPause do
     begin
-        KeyName := '';
-        for SpecKey := KeyEsc to KeyRight do
-            if SpecKeyCodes[SpecKey] = CurrentControls[key] then
-            begin
-                KeyName := SpecKeyName[SpecKey];
-                break;
-            end;
-        if KeyName = '' then
-            KeyName := chr(CurrentControls[key]);
-        ControlName := ControlKeyName[key] + ' - ' + KeyName; 
-        AddListWidgetItem(list, ControlName);
+        GetControlDescription(control, CurrentControls, ControlDescription);
+        AddListWidgetItem(list, ControlDescription);
     end;
-    ShowListWidget(list, SelectedItem);
+    AddListWidgetSeparator(list);
+    AddListWidgetItem(list, SaveControlsButton);
+    AddListWidgetItem(list, CancelControlsButton);
+    while true do
+    begin
+        ShowListWidget(list, SelectedItem);
+        ParseControlStr(SelectedItem, SelectedControlName);
+        GetControlByName(SelectedControlName, control);
+        if SelectedItem = SaveControlsButton then
+        begin
+            SetControls(CurrentControls);
+            break;
+        end
+        else if (SelectedItem = CancelControlsButton) or 
+            (control = CKeyNone) then
+        begin
+            break;
+        end;
+        GetNewControl(control, CurrentControls[control]);
+        GetControlDescription(control, CurrentControls, ControlDescription);
+        UpdateListWidgetItem(list, ControlDescription); 
+    end;
     RemoveListWidget(list);
 end;
 
 procedure ShowAuthorInfo;
+var
+    key: shortint;
 begin
     ShowTextBox(AuthorInfoTitle, AuthorInfo);
+    GetKey(key);
 end;
 
 end.

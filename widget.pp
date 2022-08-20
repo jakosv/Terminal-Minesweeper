@@ -25,6 +25,8 @@ procedure ShowListWidget(var list: ListWidget; var selection: string);
 procedure DrawText(data: string; x, y: integer; fgcolor, bgcolor: word);
 procedure ClearLine(line: integer);
 procedure AddListWidgetItem(var list: ListWidget; item: string);
+procedure UpdateListWidgetItem(var list: ListWidget; item: string);
+procedure AddListWidgetSeparator(var list: ListWidget);
 procedure NextListWidgetItem(var list: ListWidget);
 procedure PrevListWidgetItem(var list: ListWidget);
 procedure ShowTextBox(title: string; content: string);
@@ -43,6 +45,7 @@ const
     FormBorderCorner = '+';
     ListSelectionFgcolor = InterfaceBgcolor;
     ListSelectionBgcolor = InterfaceFgcolor;
+    ListWidgetSeparator = 's';
 
 type
     TForm = record
@@ -109,12 +112,12 @@ begin
     TextAttr := SaveTextAttr;
 end;
 
-procedure DrawFormBottom(var form: TForm);
+procedure DrawFormHorizontalBorder(y: integer; var form: TForm);
 var
     i, SaveTextAttr: integer;
 begin
     SaveTextAttr := TextAttr;
-    GotoXY(form.x, form.y + form.height + 1);
+    GotoXY(form.x, y);
     TextColor(InterfaceFgcolor);
     TextBackground(InterfaceBgcolor);
     write(FormBorderCorner);
@@ -132,7 +135,7 @@ begin
     DrawFormTitle(form);
     for i:=1 to form.height do
         DrawLine(form.x, form.y + i, form.width);
-    DrawFormBottom(form);
+    DrawFormHorizontalBorder(form.y + form.height + 1, form);
 end;
 
 
@@ -230,12 +233,17 @@ begin
     tmp := list.FirstItem;
     while tmp <> nil do
     begin
-        if list.SelectedItem = tmp then
-            DrawFormTextLineCenter(form, tmp^.data, LineNumber, 
-                ListSelectionFgcolor,ListSelectionBgcolor)
-        else
-            DrawFormTextLineCenter(form, tmp^.data, LineNumber, 
-                InterfaceFgcolor, InterfaceBgcolor);
+        if tmp^.data = ListWidgetSeparator then
+            DrawFormHorizontalBorder(form.y + LineNumber + 1, form)
+        else 
+        begin
+            if list.SelectedItem = tmp then
+                DrawFormTextLineCenter(form, tmp^.data, LineNumber, 
+                    ListSelectionFgcolor,ListSelectionBgcolor)
+            else
+                DrawFormTextLineCenter(form, tmp^.data, LineNumber, 
+                    InterfaceFgcolor, InterfaceBgcolor);
+        end;
         tmp := tmp^.next;
         LineNumber := LineNumber + 1;
     end;
@@ -243,16 +251,20 @@ end;
 
 procedure ShowListWidget(var list: ListWidget; var selection: string);
 var
-    key: integer;
+    key: shortint;
 begin
     while true do
     begin
         DrawListWidget(list);
         GetKey(key);
         if key = SpecKeyCodes[KeyDown] then
-            NextListWidgetItem(list)
+            repeat
+                NextListWidgetItem(list)
+            until list.SelectedItem^.data <> ListWidgetSeparator
         else if key = SpecKeyCodes[KeyUp] then
+            repeat
                 PrevListWidgetItem(list)
+            until list.SelectedItem^.data <> ListWidgetSeparator
         else if key = SpecKeyCodes[KeyEnter] then
         begin
             selection := list.SelectedItem^.data;
@@ -284,6 +296,16 @@ begin
         list.MaxItemSize := length(item);
     if list.SelectedItem = nil then
         list.SelectedItem := list.FirstItem;
+end;
+
+procedure UpdateListWidgetItem(var list: ListWidget; item: string);
+begin
+    list.SelectedItem^.data := item;
+end;
+
+procedure AddListWidgetSeparator(var list: ListWidget);
+begin
+    AddListWidgetItem(list, ListWidgetSeparator);
 end;
 
 procedure NextListWidgetItem(var list: ListWidget);
@@ -351,7 +373,7 @@ end;
 
 procedure ShowTextBox(title: string; content: string);
 var
-    i, idx, LineNumber, MaxLineSize, LinesCount, c: integer;
+    i, idx, LineNumber, MaxLineSize, LinesCount: integer;
     row: string[70];
     form: TForm;
 begin
@@ -381,7 +403,6 @@ begin
     row[idx] := content[i];
     SetLength(row, idx);
     DrawFormTextLine(form, row, LineNumber, InterfaceFgcolor, InterfaceBgcolor);
-    GetKey(c);
 end;
 
 procedure ShowMessage(msg: string);

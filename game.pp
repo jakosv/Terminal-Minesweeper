@@ -93,6 +93,7 @@ var
     SelectedItem: string;
     difficult: GameDifficult;
     list: ListWidget;
+    ExitToMenu: boolean;
 begin
     clrscr;
     CreateListWidget(list, DifficultMenuTitle);
@@ -101,12 +102,15 @@ begin
         AddListWidgetItem(list, DifficultNames[difficult]);
     ShowListWidget(list, SelectedItem);
     RemoveListWidget(list);
+    ExitToMenu := true;
     for difficult := GDEasy to GDHard do
         if SelectedItem = DifficultNames[difficult] then
         begin
             GameState.difficult := difficult;
+            ExitToMenu := false;
             break;
         end;
+    GameState.IsExit := ExitToMenu;
     clrscr;
 end;
 
@@ -238,7 +242,7 @@ procedure GameLoop(var GameState: TGame);
 const
     DelayDuration = 30;
 var
-    key: integer;
+    key: shortint;
 begin
     GameState.GameTime := Time - GameState.StartTime;
     ShowGameInfo(GameState);
@@ -258,7 +262,7 @@ end;
 
 procedure GameEnd(var GameState: TGame);
 var
-    key: integer;
+    key: shortint;
 begin
     if GameState.GameOver then
     begin
@@ -281,7 +285,11 @@ procedure StartGame(var GameState: TGame);
 begin
     clrscr;
     if not GameState.IsRestart then
+    begin
         GetGameDifficult(GameState);
+        if GameState.IsExit then
+            exit;
+    end;
     InitGame(GameState);
     while not IsGameOver(GameState) do
         GameLoop(GameState);

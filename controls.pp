@@ -3,12 +3,12 @@ unit controls;
 interface
 uses keyboard;
 type
-    ControlKeys = (CKeyMoveUp, CKeyMoveDown, CKeyMoveRight, CKeyMoveLeft, 
-        CKeyOpen, CKeyFlag, CKeySuspicious, CKeyPause); 
+    TControl = (CKeyNone, CKeyMoveUp, CKeyMoveDown, CKeyMoveRight, 
+        CKeyMoveLeft, CKeyOpen, CKeyFlag, CKeySuspicious, CKeyPause); 
     ControlsArray = array [CKeyMoveUp..CKeyPause] of shortint;
     
 const
-    ControlKeyName: array [CKeyMoveUp..CKeyPause] of string = (
+    ControlsNames: array [CKeyMoveUp..CKeyPause] of string = (
         'Move up',
         'Move down',
         'Move right',
@@ -22,6 +22,9 @@ const
 procedure LoadControls(var CurrentControls: ControlsArray);
 procedure SetControls(var NewControls: ControlsArray);
 procedure GetDefaultControls(var DefaultControls: ControlsArray);
+procedure GetControlByName(var name: string; var SelectedControl: TControl); 
+procedure GetControlDescription(control: TControl; 
+    var CurrentControls: ControlsArray; var description: string);
 
 implementation
 const
@@ -78,6 +81,28 @@ begin
     seek(f, 0);
     write(f, NewControls);
     close(f);
+end;
+
+procedure GetControlByName(var name: string; var SelectedControl: TControl); 
+var
+    control: TControl;
+begin
+    SelectedControl := CKeyNone;
+    for control := CKeyMoveUp to CKeyPause do
+        if name = ControlsNames[control] then
+        begin
+            SelectedControl := control; 
+            break;
+        end;
+end;
+
+procedure GetControlDescription(control: TControl; 
+    var CurrentControls: ControlsArray; var description: string);
+var
+    KeyName: string;
+begin
+    GetKeyName(CurrentControls[control], KeyName);
+    description := ControlsNames[control] + ' - ' + KeyName; 
 end;
 
 end.

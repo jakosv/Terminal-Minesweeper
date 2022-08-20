@@ -16,21 +16,22 @@ const
     );
     
     SpecKeyName: array [KeyEsc..KeyRight] of string = (
-        'escape',
-        'space',
-        'enter',
-        'up',
-        'down',
-        'left',
-        'right'
+        'Escape',
+        'Space',
+        'Enter',
+        'Arrow Up',
+        'Arrow Down',
+        'Arrow Left',
+        'Arrow Right'
     );
 
-procedure GetKey(var n: integer);
+procedure GetKey(var n: shortint);
+procedure GetKeyName(key: shortint; var KeyName: string);
 
 implementation
 uses crt;
 
-procedure GetKey(var n: integer);
+procedure GetKey(var n: shortint);
 var
     c: char;
 begin
@@ -42,6 +43,21 @@ begin
     end
     else
         n := ord(c);
+end;
+
+procedure GetKeyName(key: shortint; var KeyName: string);
+var
+    SpecKey: SpecKeys;
+begin
+    KeyName := '';
+    for SpecKey := KeyEsc to KeyRight do
+        if SpecKeyCodes[SpecKey] = key then
+        begin
+            KeyName := SpecKeyName[SpecKey];
+            break;
+        end;
+    if KeyName = '' then
+        KeyName := chr(key);
 end;
 
 end.
