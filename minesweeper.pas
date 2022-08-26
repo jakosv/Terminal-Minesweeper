@@ -21,6 +21,7 @@ var
     difficult: GameDifficult;
     ResultPosition: integer;
     message: string;
+    key: shortint;
 begin
     GameTime := GameState.GameTime;
     difficult := GameState.difficult;
@@ -31,6 +32,7 @@ begin
         message := 
             DifficultNames[difficult] + ': ' + TimeToStr(GameState.GameTime);
         ShowTextBox(NewRecordTitle, message);
+        GetKey(key);
         SaveResult(GameTime, ResultPosition);
     end;
 end;
