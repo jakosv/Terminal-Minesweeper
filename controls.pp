@@ -67,6 +67,11 @@ begin
     seek(f, 0);
     read(f, CurrentControls);
     close(f);
+    if IOResult <> 0 then
+    begin
+        GetDefaultControls(CurrentControls);
+        SetControls(CurrentControls);
+    end;
 end;
 
 procedure SetControls(var NewControls: ControlsArray);
@@ -75,9 +80,7 @@ var
 begin
 {$I-}
     assign(f, ControlsFilename);
-    reset(f);
-    if IOResult <> 0 then
-        InitDefaultControls(f);
+    rewrite(f);
     seek(f, 0);
     write(f, NewControls);
     close(f);
